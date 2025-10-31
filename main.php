@@ -1,22 +1,22 @@
 <?php
 class communicator_client{
-    public static function runfunction(string $function):mixed{
-        $result = self::run('127.0.0.1', 8080, array("type"=>"function_string","payload"=>$function));
+    public static function runfunction(string $function, string $ip="127.0.0.1", int $port=8080):mixed{
+        $result = self::run($ip, $port, array("type"=>"function_string","payload"=>$function));
         if($result["success"]){
             return $result["result"];
         }
         return false;
     }
-    public static function runcommand(string $command):bool{
-        $result = self::run('127.0.0.1', 8080, array("type"=>"command","payload"=>$command));
+    public static function runcommand(string $command, string $ip="127.0.0.1", int $port=8080):bool{
+        $result = self::run($ip, $port, array("type"=>"command","payload"=>$command));
         return $result["success"];
     }
-    public static function run(string $ip, int $port, array $data):array{
-        $socket = communicator::connect($ip,$port,false,$socketError,$socketErrorString);
+    public static function run(string $ip, int $port, array $data, float|false $timeout=false):array{
+        $socket = communicator::connect($ip, $port, $timeout, $socketError, $socketErrorString);
         if($socket !== false){
-            return self::execute($socket,$data);
+            return self::execute($socket, $data);
         }
-        return array("success"=>false,"error"=>"Unable to connect to " . $ip . ":" . $port);
+        return ["success"=>false, "error"=>"Unable to connect to " . $ip . ":" . $port];
     }
     private static function execute($socket, array $data):array{
         $return = array("success"=>false);
