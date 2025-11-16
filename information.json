@@ -5,6 +5,6 @@
     "author": "tom",
     "description": "Does things with communicator server",
     "dependencies": {
-        "communicator": 7
+        "communicator": 6
     }
 }
