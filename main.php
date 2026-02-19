@@ -34,6 +34,34 @@ class communicator_client{
 
         return $result["success"];
     }
+    public static function uploadFile(string $serverFileName, string $localFileName, bool $overwrite, string $ip, int $port=8080):string|false{
+        $result = self::run($ip, $port, [
+            "type" => "fileup",
+            "payload" => [
+                'name' => $serverFileName,
+                'clientFile' => $localFileName,
+                'overwrite' => $overwrite
+            ]
+        ]);
+
+        if($result["success"]){
+            return $result["result"];
+        }
+
+        return false;
+    }
+    public static function downloadFile(string $serverFileName, string $localFileName, bool $overwrite, string $ip, int $port=8080):string|false{
+        $result = self::run($ip, $port, [
+            "type" => "filedown",
+            "payload" => [
+                'name' => $serverFileName,
+                'clientFile' => $localFileName,
+                'overwrite' => $overwrite
+            ]
+        ]);
+
+        return $result["success"];
+    }
     public static function serverCalledMe():bool{
         foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $caller){
             if(isset($caller['class']) && $caller['class'] === "communicator_server"){
@@ -45,7 +73,7 @@ class communicator_client{
     }
     public static function run(string $ip, int $port, array $data, float|false $timeout=false):array{
 
-        $data['version'] = 2;
+        $data['version'] = 3;
 
         //Check if call originates from communicator_server to avoid communicator talking to itself while the server is in a busy state
         if(self::serverCalledMe()){
@@ -88,6 +116,27 @@ class communicator_client{
 
         if(!communicator::sendData($socket, $data, true)){
             return ["success"=>false, "error"=>"Error sending data"];
+        }
+
+        if($data['type'] === "fileup" || $data['type'] === "filedown"){
+            if(!isset($data['payload']['clientFile']) || !is_string($data['payload']['clientFile'])){
+                return ["success"=>false, "error"=>"Client File not set"];
+            }
+
+            if(!isset($data['payload']['overwrite'])){
+                $data['payload']['overwrite'] = false;
+            }
+
+            if($data['type'] === "fileup"){
+                if(!communicator::sendFromFile($socket, $data['payload']['clientFile'], true)){
+                    return ["success"=>false, "error"=>"Failed to upload file"];
+                }
+            }
+            else{//filedown
+                if(!communicator::receiveFile($socket, $data['payload']['clientFile'], true, $data['payload']['overwrite'])){
+                    return ["success"=>false, "error"=>"Failed to download file"];
+                }
+            }
         }
 
         $result = communicator::receiveData($socket, true);
