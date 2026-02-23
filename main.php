@@ -8,13 +8,8 @@ class communicator_client{
             return $result["result"];
         }
 
-        if(isset($result['error']) && is_string($result['error'])){
-            if($returnErrorString){
-                return $result['error'];
-            }
-            else{
-                mklog(0, 'Runfunction Error: ' . $result['error']);
-            }
+        if(isset($result['error']) && is_string($result['error']) && $returnErrorString){
+            return $result['error'];
         }
 
         return false;
@@ -62,6 +57,22 @@ class communicator_client{
 
         return $result["success"];
     }
+    public static function customAction(string $package, string $action, array $args=[], string $ip="127.0.0.1", int $port=8080):mixed{
+        $result = self::run($ip, $port, [
+            "type" => "custom",
+            "payload" => [
+                'package' => $package,
+                'action' => $action,
+                'args' => $args
+            ]
+        ]);
+
+        if($result["success"]){
+            return $result["result"];
+        }
+
+        return false;
+    }
     public static function serverCalledMe():bool{
         foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $caller){
             if(isset($caller['class']) && $caller['class'] === "communicator_server"){
@@ -73,36 +84,42 @@ class communicator_client{
     }
     public static function run(string $ip, int $port, array $data, float|false $timeout=false):array{
 
-        $data['version'] = 3;
+        $data['version'] = 4;
+
+        $result = [];
 
         //Check if call originates from communicator_server to avoid communicator talking to itself while the server is in a busy state
         if(self::serverCalledMe()){
             mklog(0, "Running communicator_server action internally");
-            if(method_exists('communicator_server', 'run')){
-                return communicator_server::run($data);
+            if(!method_exists('communicator_server', 'run')){
+                $result = ["success"=>false, "error"=>"Cannot connect to communicator_server from within communicator_server with version 11 or lower"];
+                goto ret;
             }
-            else{
-                return ["success"=>false, "error"=>"Cannot connect to communicator_server from within communicator_server with version 11 or lower"];
-            }
+
+            $result = communicator_server::run($data);
+            goto ret;
         }
-        else{
-            $socket = communicator::connect($ip, $port, $timeout, $socketError, $socketErrorString);
+        
+        $socket = communicator::connect($ip, $port, $timeout, $socketError, $socketErrorString);
 
-            if($socket === false){
-                return [
-                    "success" => false,
-                    "error" => "Unable to connect to " . $ip . ":" . $port
-                ];
-            }
-            
-            $result = self::execute($socket, $data);
-
-            if(!communicator::close($socket)){
-                mklog(2, "Failed to close socket");
-            }
-
-            return $result;
+        if($socket === false){
+            $result = ["success"=>false, "error"=>"Unable to connect to " . $ip . ":" . $port];
+            goto ret;
         }
+        
+        $result = self::execute($socket, $data);
+
+        if(!communicator::close($socket)){
+            mklog(2, "Failed to close socket");
+        }
+
+        ret:
+
+        if(isset($result['error'])){
+            mklog(1, 'Communicator error: ' . $result['error']);
+        }
+
+        return $result;
     }
     private static function execute($socket, array $data):array{
 
@@ -144,7 +161,7 @@ class communicator_client{
             return ["success"=>false, "error"=>"Error receiving data"];
         }
 
-        if(!isset($result['success']) || !isset($result['result'])){
+        if(!isset($result['success'])){
             return ["success"=>false, "error"=>"Received incomplete data"];
         }
 
