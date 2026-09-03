@@ -12,7 +12,7 @@ class communicator_client{
             return $result['error'];
         }
 
-        return false;
+        return null;
     }
     public static function runcommand(string $command, string $ip="127.0.0.1", int $port=8080, bool $returnOutput=false):bool|string{
 
@@ -29,7 +29,7 @@ class communicator_client{
 
         return $result["success"];
     }
-    public static function uploadFile(string $serverFileName, string $localFileName, bool $overwrite, string $ip, int $port=8080):string|false{
+    public static function uploadFile(string $serverFileName, string $localFileName, bool $overwrite, string $ip, int $port=8080):?string{
         $result = self::run($ip, $port, [
             "type" => "fileup",
             "payload" => [
@@ -43,9 +43,9 @@ class communicator_client{
             return $result["result"];
         }
 
-        return false;
+        return null;
     }
-    public static function downloadFile(string $serverFileName, string $localFileName, bool $overwrite, string $ip, int $port=8080):string|false{
+    public static function downloadFile(string $serverFileName, string $localFileName, bool $overwrite, string $ip, int $port=8080):bool{
         $result = self::run($ip, $port, [
             "type" => "filedown",
             "payload" => [
@@ -71,7 +71,7 @@ class communicator_client{
             return $result["result"];
         }
 
-        return false;
+        return null;
     }
     public static function serverCalledMe():bool{
         foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $caller){
@@ -100,7 +100,7 @@ class communicator_client{
             goto ret;
         }
         
-        $socket = communicator::connect($ip, $port, $timeout, $socketError, $socketErrorString);
+        $socket = communicator::connect($ip, $port, $timeout, $socketErrorString);
 
         if($socket === false){
             $result = ["success"=>false, "error"=>"Unable to connect to " . $ip . ":" . $port];

@@ -1,10 +1,10 @@
 {
     "id_name": "communicator_client",
     "name": "Communicator client (Dev)",
-    "version": 9,
+    "version": 10,
     "author": "tom",
     "description": "",
     "dependencies": {
-        "communicator": 8
+        "communicator": 10
     }
 }
