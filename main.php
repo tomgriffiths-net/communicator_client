@@ -102,7 +102,7 @@ class communicator_client{
         
         $socket = communicator::connect($ip, $port, $timeout, $socketErrorString);
 
-        if($socket === false){
+        if($socket === null){
             $result = ["success"=>false, "error"=>"Unable to connect to " . $ip . ":" . $port];
             goto ret;
         }
@@ -121,7 +121,7 @@ class communicator_client{
 
         return $result;
     }
-    private static function execute($socket, array $data):array{
+    private static function execute(Socket $socket, array $data):array{
 
         if(!isset($data['type'])){
             return ["success"=>false, "error"=>"Type not set"];

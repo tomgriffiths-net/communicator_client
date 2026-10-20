@@ -1,10 +1,16 @@
 {
-    "id_name": "communicator_client",
+    "id": "communicator_client",
     "name": "Communicator client (Dev)",
-    "version": 10,
+    "version": "1.10.1",
     "author": "tom",
-    "description": "",
-    "dependencies": {
-        "communicator": 10
-    }
+    "description": "Fixed failed connection throwing type error",
+    "dependencies": [
+        {
+            "id": "communicator",
+            "min": "1.10.0"
+        }
+    ],
+    "operatingSystems": [
+        "windows"
+    ]
 }
